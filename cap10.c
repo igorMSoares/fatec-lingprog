@@ -510,6 +510,15 @@ int lerProdutoDoArquivo(Produto *produto, int i) {
   return numeroDeBytesLidos;
 }
 
+void exibirProduto(Produto *produto) {
+  if (produto->nome[0] == '*') {
+    return;
+  }
+  printf(">> %s\n", produto->nome);
+  printf("QUANTIDADE: %.2d\n", produto->quantidade);
+  printf("CODIGO: %.4d\n", produto->codigo);
+}
+
 int pesquisarProdutoPorNome(char *nome, Produto *produto) {
   int numeroDeBytesLidos = -1;
   FILE *f = fopen("produtos.txt", "r");
@@ -533,13 +542,19 @@ int pesquisarProdutoPorNome(char *nome, Produto *produto) {
   return -1;
 }
 
-void imprimirProduto(Produto *produto) {
-  if (produto->nome[0] == '*') {
+void pesquisarProduto(Produto *produto) {
+  char nome[21];
+  printf("> Digite o nome do produto para pesquisar: ");
+  gets(nome);
+
+  int id = pesquisarProdutoPorNome(nome, produto);
+
+  if (id == -1) {
+    printf(">> \"%s\" não está cadastrado no sistema.\n", nome);
     return;
   }
-  printf(">> %s\n", produto->nome);
-  printf("QUANTIDADE: %.2d\n", produto->quantidade);
-  printf("CODIGO: %.4d\n", produto->codigo);
+
+  exibirProduto(produto);
 }
 
 void listarTodosProdutos(Produto *produto) {
@@ -554,14 +569,19 @@ void listarTodosProdutos(Produto *produto) {
     printf("====================================\n");
     printf("                 %.4d               \n", count + 1);
     printf("====================================\n");
-    imprimirProduto(produto);
+    exibirProduto(produto);
 
     count++;
   }
-
   if (count == 0) {
     printf(">> Nenhum produto cadastrado no sistema.\n");
     printf(">> Digite 1 no MENU para incluir produtos.\n");
+  } else {
+    printf("\n> Listagem concluída.\n");
+    printf(">> Aperte ENTER para exibir o menu: ");
+
+    scanf("");
+    limpaBuffer();
   }
 
   printf("\n");
@@ -575,7 +595,7 @@ void listarProdutosIndisponiveis(Produto *produto) {
       printf("====================================\n");
       printf("                 %.4d               \n", count + 1);
       printf("====================================\n");
-      imprimirProduto(produto);
+      exibirProduto(produto);
 
       count++;
     }
@@ -583,12 +603,22 @@ void listarProdutosIndisponiveis(Produto *produto) {
 
   if (count == 0) {
     printf("\n>> Nenhum produto indisponível para exibir.\n");
+  } else {
+    printf("\n> Listagem concluída.\n");
+    printf(">> Aperte ENTER para exibir o menu: ");
+
+    scanf("");
+    limpaBuffer();
   }
 
   printf("\n");
 }
 
-void alterarQuantidade(char *nome, Produto *produto) {
+void alterarQuantidade(Produto *produto) {
+  char nome[21];
+  printf("> Digite o nome do produto para alterar a quantidade: ");
+  gets(nome);
+
   int i = pesquisarProdutoPorNome(nome, produto);
 
   if (i == -1) {
@@ -605,7 +635,11 @@ void alterarQuantidade(char *nome, Produto *produto) {
   printf(">> Quantidade de \"%s\" alterada com sucesso.\n", nome);
 }
 
-void alterarProduto(char *nome, Produto *produto) {
+void alterarProduto(Produto *produto) {
+  char nome[21];
+  printf("> Digite o nome do produto a ser alterado: ");
+  gets(nome);
+
   int i = pesquisarProdutoPorNome(nome, produto);
 
   if (i == -1) {
@@ -647,41 +681,88 @@ void excluirProduto(Produto *produto) {
 }
 
 void incluirProduto(Produto *produto) {
+  char res = '1';
+
+  while (res != '0') {
+    printf("\n");
+    printf("====================================\n");
+    printf("             NOVO PRODUTO           \n");
+    printf("====================================\n");
+
+    printf("\n> Digite os dados do produto:\n");
+    printf("> NOME: ");
+    gets(produto->nome);
+    printf("> CODIGO: ");
+    scanf("%d", &produto->codigo);
+    printf("> QUANTIDADE: ");
+    scanf("%d", &produto->quantidade);
+    limpaBuffer();
+
+    salvarProdutoNoFinalDoArquivo(produto);
+    printf("\n>> \"%s\" cadastrado com sucesso!\n", produto->nome);
+
+    printf("\n");
+    printf("> 1. Cadastrar outro produto\n");
+    printf("> 0. Retornar ao menu\n");
+    printf(">> [1 ou 0]: ");
+    scanf("%c", &res);
+    limpaBuffer();
+  }
+}
+
+void menu(char *res) {
   printf("\n");
-  printf("====================================\n");
-  printf("             NOVO PRODUTO           \n");
-  printf("====================================\n");
-
-  printf("\n> Digite os dados do produto:\n");
-  printf("> NOME: ");
-  gets(produto->nome);
-  printf("> CODIGO: ");
-  scanf("%d", &produto->codigo);
-  printf("> QUANTIDADE: ");
-  scanf("%d", &produto->quantidade);
+  printf("===================================\n");
+  printf("                MENU               \n");
+  printf("===================================\n");
+  printf("\t1. Incluir produtos\n");
+  printf("\t2. Listar todos os produtos\n");
+  printf("\t3. Pesquisar produto por nome\n");
+  printf("\t4. Listar todos produtos indisponíveis\n");
+  printf("\t5. Alterar quantidade\n");
+  printf("\t6. Alterar produtos\n");
+  printf("\t7. Excluir produtos\n");
+  printf("\t8. Encerrar\n");
+  printf("> Escolha uma das opções: ");
+  scanf("%c", res);
   limpaBuffer();
-
-  salvarProdutoNoFinalDoArquivo(produto);
-  printf("\n>> \"%s\" cadastrado com sucesso!\n", produto->nome);
 }
 
 int main() {
   char res = '0';
   Produto produto;
-  listarProdutosIndisponiveis(&produto);
-  incluirProduto(&produto);
-  listarTodosProdutos(&produto);
-  excluirProduto(&produto);
-  listarTodosProdutos(&produto);
 
-  // while (res == '0') {
-  //
-  //   printf("\n\nDigite 0 para para executar novamente: ");
-  //   scanf("%c", &res);
-  //   limpaBuffer();
-  // }
+  while (1) {
+    menu(&res);
 
-  return 0;
+    switch (res) {
+    case '1':
+      incluirProduto(&produto);
+      break;
+    case '2':
+      listarTodosProdutos(&produto);
+      break;
+    case '3':
+      pesquisarProduto(&produto);
+      break;
+    case '4':
+      listarProdutosIndisponiveis(&produto);
+      break;
+    case '5':
+      alterarQuantidade(&produto);
+      break;
+    case '6':
+      alterarProduto(&produto);
+      break;
+    case '7':
+      excluirProduto(&produto);
+      break;
+    case '8':
+      exit(0);
+    default:
+      printf(">> Opção inválida.\n");
+    }
+  }
 }
 #endif
 

@@ -1,11 +1,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define ex2
+#define ex3
 
 void limpaBuffer() {
   while (getchar() != '\n')
     ;
+}
+
+int comparaStrings(char *a, char *b) {
+  for (int i = 0; a[i] != '\0' || b[i] != '\0'; i++) {
+    if (a[i] != b[i]) {
+      return 0;
+    }
+  }
+
+  return 1;
 }
 
 /*
@@ -417,6 +427,210 @@ int main() {
       exit(0);
     }
   }
+}
+#endif
+
+/*
+3 - Escreva um programa para o controle de mercadorias em uma dispensa
+    domestica. Para cada produto sera' armazenado um codigo numerico, nome
+    do produto e quantidade atual numa estrutura de dados. A unica estrutura
+    de dados deve ser declarada como variavel LOCAL na funcao main(). Escreva
+    os itens das mercadorias direto no arquivo. (utilize a funcao fseek quando
+    necessario). NAO pode usar vetor de estruturas. Utilize ponteiros.
+    O programa deve ter as seguintes opcoes: (cada opcao do menu e' um funcao)
+    1 - inclui produtos
+    2 - listar todos os produtos
+    3 - pesquisar uma mercadoria pela descrição
+    4 - listar os produtos não disponíveis.
+    5 - alterar a quantidade atual
+    6 - altera produtos
+    7 - exclui produtos
+    8 - saida
+*/
+#ifdef ex3
+typedef struct Produto {
+  int codigo;
+  char nome[21];
+  int quantidade;
+} Produto;
+
+// copia a para b
+void copiarStrings(char *a, char *b) {
+  int i;
+
+  for (i = 0; a[i] != '\0'; i++) {
+    b[i] = a[i];
+  }
+
+  b[i] = '\0';
+}
+
+void salvarProdutoNoFinalDoArquivo(Produto *produto) {
+  FILE *f = fopen("produtos.txt", "a");
+
+  if (f == NULL) {
+    printf("Erro ao abrir arquivo de produtos.\n");
+    exit(0);
+  }
+
+  fseek(f, 0, 2);
+  fwrite(produto, sizeof(Produto), 1, f);
+  fclose(f);
+}
+
+void alterarProdutoNoArquivo(Produto *produto, int i) {
+  FILE *f = fopen("produtos.txt", "r+");
+
+  if (f == NULL) {
+    printf("Erro ao abrir arquivo de produtos.\n");
+    exit(0);
+  }
+
+  fseek(f, i * sizeof(Produto), 0);
+  fwrite(produto, sizeof(Produto), 1, f);
+  fclose(f);
+}
+
+int lerProdutoDoArquivo(Produto *produto, int i) {
+  int numeroDeBytesLidos = 0;
+  FILE *f = fopen("produtos.txt", "r");
+
+  if (f == NULL) {
+    printf("Erro ao ler arquivo de produtos.\n");
+    exit(0);
+  }
+
+  fseek(f, i * sizeof(Produto), 0);
+  numeroDeBytesLidos = fread(produto, sizeof(Produto), 1, f);
+  fclose(f);
+
+  return numeroDeBytesLidos;
+}
+
+int pesquisarProdutoPorNome(char *nome, Produto *produto) {
+  for (int i = 0; (lerProdutoDoArquivo(produto, i)) != 0; i++) {
+    if (comparaStrings(nome, produto->nome)) {
+      return i;
+    }
+  }
+
+  return -1;
+}
+
+void imprimirProduto(Produto *produto) {
+  printf("\nCodigo: %d\nProduto: %s\nQuantidade: %d\n", produto->codigo,
+         produto->nome, produto->quantidade);
+}
+
+void listarTodosProdutos(Produto *produto) {
+  for (int i = 0; (lerProdutoDoArquivo(produto, i)) != 0; i++) {
+    imprimirProduto(produto);
+  }
+}
+
+void listarProdutosIndisponiveis(Produto *produto) {
+  for (int i = 0; (lerProdutoDoArquivo(produto, i)) != 0; i++) {
+    if (produto->quantidade == 0) {
+      imprimirProduto(produto);
+    }
+  }
+}
+
+void alterarQuantidade(char *nome, int novaQuantidade, Produto *produto) {
+  int i = pesquisarProdutoPorNome(nome, produto);
+
+  if (i == -1) {
+    printf("Produto %s não está cadastrado.\n", nome);
+    return;
+  }
+
+  produto->quantidade = novaQuantidade;
+  alterarProdutoNoArquivo(produto, i);
+}
+
+void alterarProduto(char *nome, Produto *produto) {
+  int i = pesquisarProdutoPorNome(nome, produto);
+
+  if (i == -1) {
+    printf("Produto %s não está cadastrado.\n", nome);
+    return;
+  }
+
+  produto->codigo = 666;
+  produto->quantidade = 22;
+  copiarStrings("Mudei", produto->nome);
+  alterarProdutoNoArquivo(produto, i);
+}
+
+int main() {
+  char res = '0';
+  Produto produto;
+  alterarProduto("Macarrão", &produto);
+  // alterarQuantidade("Outro Produto", 3, &produto);
+  // Produto produto = {1, "Macarrão", 2};
+  // salvarProdutoNoFinalDoArquivo(&produto);
+  // copiarStrings("Amaciante", produto.nome);
+  // produto.codigo++;
+  // produto.quantidade = 2;
+  // salvarProdutoNoFinalDoArquivo(&produto);
+  //
+  // copiarStrings("Macarrão", produto.nome);
+  // produto.codigo++;
+  // produto.quantidade = 10;
+  // salvarProdutoNoFinalDoArquivo(&produto);
+  //
+  // copiarStrings("Outro Produto", produto.nome);
+  // produto.codigo++;
+  // produto.quantidade = 0;
+  // salvarProdutoNoFinalDoArquivo(&produto);
+  //
+  // printf("================================================================\n");
+  // listarProdutosIndisponiveis(&produto);
+  // printf("================================================================\n");
+  // alterarQuantidade("Outro Produto", 3, &produto);
+  // listarProdutosIndisponiveis(&produto);
+  // printf("Quantidade alterada.\n");
+  // printf("================================================================\n");
+
+  // Produto produto = {10, "Outro Produto", 0};
+  // salvarProdutoNoFinalDoArquivo(&produto);
+
+  // pesquisarProdutoPorNome("Macarrão", &produto);
+  // imprimirProduto(&produto);
+
+  // Produto produto = {10, "Outro Produto", 0};
+  // salvarProdutoNoArquivo(&produto);
+  // lerProdutoDoArquivo(&produto);
+  // imprimirProduto(&produto);
+
+  // copiarStrings("Amaciante", produto.nome);
+  // produto.codigo++;
+  // produto.quantidade = 2;
+  // salvarProdutoNoFinalDoArquivo(&produto);
+  //
+  // copiarStrings("Macarrão", produto.nome);
+  // produto.codigo++;
+  // produto.quantidade = 10;
+  // salvarProdutoNoFinalDoArquivo(&produto);
+  //
+  // copiarStrings("Outro Produto", produto.nome);
+  // produto.codigo++;
+  // produto.quantidade = 0;
+  // salvarProdutoNoFinalDoArquivo(&produto);
+  //
+  listarTodosProdutos(&produto);
+
+  // lerProdutoDoArquivo(&produto);
+  // imprimirProduto(&produto);
+
+  // while (res == '0') {
+  //
+  //   printf("\n\nDigite 0 para para executar novamente: ");
+  //   scanf("%c", &res);
+  //   limpaBuffer();
+  // }
+
+  return 0;
 }
 #endif
 

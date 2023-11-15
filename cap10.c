@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define ex3
+#define ex4
 
 void limpaBuffer() {
   while (getchar() != '\n')
@@ -550,7 +550,7 @@ void pesquisarProduto(Produto *produto) {
   int id = pesquisarProdutoPorNome(nome, produto);
 
   if (id == -1) {
-    printf(">> \"%s\" não está cadastrado no sistema.\n", nome);
+    printf("\n>> \"%s\" não está cadastrado no sistema.\n", nome);
     return;
   }
 
@@ -643,7 +643,7 @@ void alterarProduto(Produto *produto) {
   int i = pesquisarProdutoPorNome(nome, produto);
 
   if (i == -1) {
-    printf(">> \"%s\" não está cadastrado no sistema.\n", nome);
+    printf("\n>> \"%s\" não está cadastrado no sistema.\n", nome);
     return;
   }
 
@@ -668,7 +668,7 @@ void excluirProduto(Produto *produto) {
   int id = pesquisarProdutoPorNome(nome, produto);
 
   if (id == -1) {
-    printf(">> \"%s\" não está cadastrado no sistema.\n", nome);
+    printf("\n>> \"%s\" não está cadastrado no sistema.\n", nome);
     return;
   }
 
@@ -766,17 +766,264 @@ int main() {
 }
 #endif
 
-#ifdef ex
-int main() {
-  char res = '0';
+#ifdef ex4
+typedef struct {
+  char nome[21];
+  char email[31];
+  char celular[21];
+} Cliente;
 
-  while (res == '0') {
+// copia a para b
+void copiarStrings(char *a, char *b) {
+  int i;
 
-    printf("\n\nDigite 0 para para executar novamente: ");
-    scanf("%c", &res);
+  for (i = 0; a[i] != '\0'; i++) {
+    b[i] = a[i];
+  }
+
+  b[i] = '\0';
+}
+
+void salvarNoFinalDoArquivo(Cliente *cliente) {
+  FILE *f = fopen("clientes.txt", "a");
+
+  if (f == NULL) {
+    printf("Erro ao abrir arquivo de clientes.\n");
+    exit(0);
+  }
+
+  fwrite(cliente, sizeof(Cliente), 1, f);
+  fclose(f);
+}
+
+void alterarNoArquivo(Cliente *cliente, int i) {
+  FILE *f = fopen("clientes.txt", "r+");
+
+  if (f == NULL) {
+    printf(">> Nenhum produto cadastrado no sistema.\n");
+    printf(">> Digite 1 no MENU para incluir produtos.\n");
+
+    return;
+  }
+
+  fseek(f, i * sizeof(Cliente), 0);
+  fwrite(cliente, sizeof(Cliente), 1, f);
+  fclose(f);
+}
+
+int lerDoArquivo(Cliente *cliente, int i) {
+  int numeroDeBytesLidos = 0;
+  FILE *f = fopen("clientes.txt", "r");
+
+  if (f == NULL) { // arquivo ainda não foi criado
+    return 0;
+  }
+
+  fseek(f, i * sizeof(Cliente), 0);
+  numeroDeBytesLidos = fread(cliente, sizeof(Cliente), 1, f);
+  fclose(f);
+
+  return numeroDeBytesLidos;
+}
+
+void exibir(Cliente *cliente) {
+  if (cliente->nome[0] == '*') {
+    return;
+  }
+  printf(">> %s\n", cliente->nome);
+  printf("E-MAIL: %s\n", cliente->email);
+  printf("CELULAR: %s\n", cliente->celular);
+}
+
+int pesquisarPorNome(char *nome, Cliente *cliente) {
+  int numeroDeBytesLidos = -1;
+  FILE *f = fopen("clientes.txt", "r");
+
+  if (f == NULL) { // arquivo ainda não foi criado
+    printf(">> Nenhum cliente cadastrado no sistema.\n");
+    printf(">> Digite 1 no MENU para incluir clientes.\n");
+
+    return -1;
+  }
+
+  for (int i = 0; numeroDeBytesLidos != 0; i++) {
+    fseek(f, i * sizeof(Cliente), 0);
+    numeroDeBytesLidos = fread(cliente, sizeof(Cliente), 1, f);
+
+    if (comparaStrings(nome, cliente->nome)) {
+      return i;
+    }
+  }
+
+  return -1;
+}
+
+void pesquisar(Cliente *cliente) {
+  char nome[21];
+  printf("> Digite o nome do cliente para pesquisar: ");
+  gets(nome);
+
+  int id = pesquisarPorNome(nome, cliente);
+
+  if (id == -1) {
+    printf("\n>> \"%s\" não está cadastrado no sistema.\n", nome);
+    return;
+  }
+
+  printf("\n");
+  exibir(cliente);
+}
+
+void listarTodos(Cliente *cliente) {
+  int count = 0;
+
+  for (int i = 0; (lerDoArquivo(cliente, i)) != 0; i++) {
+    if (cliente->nome[0] == '*') {
+      continue;
+    }
+
+    printf("\n");
+    printf("====================================\n");
+    printf("                 %.4d               \n", count + 1);
+    printf("====================================\n");
+    exibir(cliente);
+
+    count++;
+  }
+
+  printf("\n");
+  if (count == 0) {
+    printf(">> Nenhum cliente cadastrado no sistema.\n");
+    printf(">> Digite 1 no MENU para incluir clientes.\n");
+  } else {
+    printf("> Listagem concluída.\n");
+    printf(">> Aperte ENTER para exibir o menu: ");
+
+    scanf("");
     limpaBuffer();
   }
 
-  return 0;
+  printf("\n");
+}
+
+void alterar(Cliente *cliente) {
+  char nome[21];
+  printf("> Digite o nome do cliente a ser alterado: ");
+  gets(nome);
+
+  int i = pesquisarPorNome(nome, cliente);
+
+  if (i == -1) {
+    printf("\n>> \"%s\" não está cadastrado no sistema.\n", nome);
+    return;
+  }
+
+  printf("\n> Digite os novos dados do cliente:\n");
+  printf("> NOME: ");
+  gets(cliente->nome);
+  printf("> E-MAIL: ");
+  gets(cliente->email);
+  printf("> CELULAR: ");
+  gets(cliente->celular);
+
+  alterarNoArquivo(cliente, i);
+  printf("\n>> \"%s\" alterado com sucesso.\n", nome);
+}
+
+void excluir(Cliente *cliente) {
+  char nome[21];
+  printf("> Digite o nome do cliente a ser excluido: ");
+  gets(nome);
+
+  int id = pesquisarPorNome(nome, cliente);
+
+  if (id == -1) {
+    printf("\n>> \"%s\" não está cadastrado no sistema.\n", nome);
+    return;
+  }
+
+  copiarStrings("********************", cliente->nome);
+  copiarStrings("********************", cliente->email);
+  copiarStrings("********************", cliente->celular);
+
+  alterarNoArquivo(cliente, id);
+  printf("\n>> \"%s\" removido do cadastro de clientes.\n", nome);
+}
+
+void incluir(Cliente *cliente) {
+  char res = '1';
+
+  while (res != '0') {
+    printf("\n");
+    printf("====================================\n");
+    printf("             NOVO CLIENTE           \n");
+    printf("====================================\n");
+
+    printf("\n> Digite os dados do cliente:\n");
+    printf("> NOME: ");
+    gets(cliente->nome);
+    printf("> E-MAIL: ");
+    gets(cliente->email);
+    printf("> CELULAR: ");
+    gets(cliente->celular);
+
+    salvarNoFinalDoArquivo(cliente);
+    printf("\n>> \"%s\" cadastrado com sucesso!\n", cliente->nome);
+
+    printf("\n");
+    printf("> 1. Cadastrar outro cliente\n");
+    printf("> 0. Retornar ao menu\n");
+    printf(">> [1 ou 0]: ");
+    scanf("%c", &res);
+    limpaBuffer();
+  }
+}
+
+void menu(char *res) {
+  printf("\n");
+  printf("===================================\n");
+  printf("                MENU               \n");
+  printf("===================================\n");
+  printf("\t1. Incluir clientes\n");
+  printf("\t2. Listar todos os clientes\n");
+  printf("\t3. Pesquisar cliente por nome\n");
+  printf("\t4. Alterar cadastro\n");
+  printf("\t5. Excluir cadastro\n");
+  printf("\t6. Encerrar\n");
+  printf("> Escolha uma das opções: ");
+  scanf("%c", res);
+  limpaBuffer();
+}
+
+int main() {
+  char res = '0';
+  Cliente cliente;
+
+  while (1) {
+    menu(&res);
+
+    switch (res) {
+    case '1':
+      incluir(&cliente);
+      break;
+    case '2':
+      listarTodos(&cliente);
+      break;
+    case '3':
+      pesquisar(&cliente);
+      break;
+    case '4':
+      alterar(&cliente);
+      break;
+    case '5':
+      excluir(&cliente);
+      break;
+    case '6':
+      exit(0);
+      break;
+    default:
+      printf(">> Opção inválida.\n");
+    }
+  }
 }
 #endif

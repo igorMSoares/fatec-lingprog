@@ -481,8 +481,10 @@ void alterarProdutoNoArquivo(Produto *produto, int i) {
   FILE *f = fopen("produtos.txt", "r+");
 
   if (f == NULL) {
-    printf("Erro ao abrir arquivo de produtos.\n");
-    exit(0);
+    printf(">> Nenhum produto cadastrado no sistema.\n");
+    printf(">> Digite 1 no MENU para incluir produtos.\n");
+
+    return;
   }
 
   fseek(f, i * sizeof(Produto), 0);
@@ -509,7 +511,20 @@ int lerProdutoDoArquivo(Produto *produto, int i) {
 }
 
 int pesquisarProdutoPorNome(char *nome, Produto *produto) {
-  for (int i = 0; (lerProdutoDoArquivo(produto, i)) != 0; i++) {
+  int numeroDeBytesLidos = -1;
+  FILE *f = fopen("produtos.txt", "r");
+
+  if (f == NULL) { // arquivo ainda não foi criado
+    printf(">> Nenhum produto cadastrado no sistema.\n");
+    printf(">> Digite 1 no MENU para incluir produtos.\n");
+
+    return -1;
+  }
+
+  for (int i = 0; numeroDeBytesLidos != 0; i++) {
+    fseek(f, i * sizeof(Produto), 0);
+    numeroDeBytesLidos = fread(produto, sizeof(Produto), 1, f);
+
     if (comparaStrings(nome, produto->nome)) {
       return i;
     }
@@ -528,7 +543,7 @@ void imprimirProduto(Produto *produto) {
 }
 
 void listarTodosProdutos(Produto *produto) {
-  int count = 1;
+  int count = 0;
 
   for (int i = 0; (lerProdutoDoArquivo(produto, i)) != 0; i++) {
     if (produto->nome[0] == '*') {
@@ -537,12 +552,19 @@ void listarTodosProdutos(Produto *produto) {
 
     printf("\n");
     printf("====================================\n");
-    printf("                 %.4d               \n", count);
+    printf("                 %.4d               \n", count + 1);
     printf("====================================\n");
     imprimirProduto(produto);
 
     count++;
   }
+
+  if (count == 0) {
+    printf(">> Nenhum produto cadastrado no sistema.\n");
+    printf(">> Digite 1 no MENU para incluir produtos.\n");
+  }
+
+  printf("\n");
 }
 
 void listarProdutosIndisponiveis(Produto *produto) {
@@ -551,7 +573,7 @@ void listarProdutosIndisponiveis(Produto *produto) {
     if (produto->quantidade == 0) {
       printf("\n");
       printf("====================================\n");
-      printf("                 %.4d               \n", i + 1);
+      printf("                 %.4d               \n", count + 1);
       printf("====================================\n");
       imprimirProduto(produto);
 
@@ -560,51 +582,68 @@ void listarProdutosIndisponiveis(Produto *produto) {
   }
 
   if (count == 0) {
-    printf("\n>> Nenhum produto indisponível para exibir.\n\n");
+    printf("\n>> Nenhum produto indisponível para exibir.\n");
   }
+
+  printf("\n");
 }
 
-void alterarQuantidade(char *nome, int novaQuantidade, Produto *produto) {
+void alterarQuantidade(char *nome, Produto *produto) {
   int i = pesquisarProdutoPorNome(nome, produto);
 
   if (i == -1) {
-    printf("Produto %s não está cadastrado.\n", nome);
+    printf("\n>> Produto %s não está cadastrado.\n", nome);
     return;
   }
 
-  produto->quantidade = novaQuantidade;
+  printf(">> Quantidade atual: %d\n", produto->quantidade);
+  printf("\n> Digite a nova quantidade: ");
+  scanf("%d", &produto->quantidade);
+  limpaBuffer();
+
   alterarProdutoNoArquivo(produto, i);
+  printf(">> Quantidade de \"%s\" alterada com sucesso.\n", nome);
 }
 
 void alterarProduto(char *nome, Produto *produto) {
   int i = pesquisarProdutoPorNome(nome, produto);
 
   if (i == -1) {
-    printf("Produto %s não está cadastrado.\n", nome);
+    printf(">> \"%s\" não está cadastrado no sistema.\n", nome);
     return;
   }
 
-  produto->codigo = 666;
-  produto->quantidade = 22;
-  copiarStrings("Mudei", produto->nome);
+  printf("\n> Digite os novos dados do produto:\n");
+  printf("> NOME: ");
+  gets(produto->nome);
+  printf("> CODIGO: ");
+  scanf("%d", &produto->codigo);
+  printf("> QUANTIDADE: ");
+  scanf("%d", &produto->quantidade);
+  limpaBuffer();
+
   alterarProdutoNoArquivo(produto, i);
+  printf(">> \"%s\" alterado com sucesso.\n", nome);
 }
 
-void excluirProduto(char *nome, Produto *produto) {
+void excluirProduto(Produto *produto) {
+  char nome[21];
+  printf("> Digite o nome do produto a ser excluido: ");
+  gets(nome);
+
   int id = pesquisarProdutoPorNome(nome, produto);
 
   if (id == -1) {
-    printf(">> \"%s\" não está cadastrado no sistema.\n\n", nome);
+    printf(">> \"%s\" não está cadastrado no sistema.\n", nome);
     return;
   }
 
-  lerProdutoDoArquivo(produto, id);
   copiarStrings("********************", produto->nome);
   produto->quantidade = -1;
   produto->codigo = -1;
-  alterarProdutoNoArquivo(produto, id);
 
-  printf(">> \"%s\" removido do cadastro de produtos.\n\n", nome);
+  alterarProdutoNoArquivo(produto, id);
+  printf(">> \"%s\" removido do cadastro de produtos.\n", nome);
 }
 
 void incluirProduto(Produto *produto) {
@@ -620,17 +659,20 @@ void incluirProduto(Produto *produto) {
   scanf("%d", &produto->codigo);
   printf("> QUANTIDADE: ");
   scanf("%d", &produto->quantidade);
+  limpaBuffer();
 
   salvarProdutoNoFinalDoArquivo(produto);
-  printf("\n>> \"%s\" cadastrado com sucesso!\n\n", produto->nome);
+  printf("\n>> \"%s\" cadastrado com sucesso!\n", produto->nome);
 }
 
 int main() {
   char res = '0';
   Produto produto;
-  // listarProdutosIndisponiveis(&produto);
-  // incluirProduto(&produto);
-  // listarTodosProdutos(&produto);
+  listarProdutosIndisponiveis(&produto);
+  incluirProduto(&produto);
+  listarTodosProdutos(&produto);
+  excluirProduto(&produto);
+  listarTodosProdutos(&produto);
 
   // while (res == '0') {
   //

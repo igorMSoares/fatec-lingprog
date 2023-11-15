@@ -473,7 +473,6 @@ void salvarProdutoNoFinalDoArquivo(Produto *produto) {
     exit(0);
   }
 
-  fseek(f, 0, 2);
   fwrite(produto, sizeof(Produto), 1, f);
   fclose(f);
 }
@@ -495,9 +494,11 @@ int lerProdutoDoArquivo(Produto *produto, int i) {
   int numeroDeBytesLidos = 0;
   FILE *f = fopen("produtos.txt", "r");
 
-  if (f == NULL) {
-    printf("Erro ao ler arquivo de produtos.\n");
-    exit(0);
+  if (f == NULL) { // arquivo ainda não foi criado
+    printf(">> Nenhum produto cadastrado no sistema.\n");
+    printf(">> Digite 1 no MENU para incluir produtos.\n");
+
+    return 0;
   }
 
   fseek(f, i * sizeof(Produto), 0);
@@ -518,21 +519,48 @@ int pesquisarProdutoPorNome(char *nome, Produto *produto) {
 }
 
 void imprimirProduto(Produto *produto) {
-  printf("\nCodigo: %d\nProduto: %s\nQuantidade: %d\n", produto->codigo,
-         produto->nome, produto->quantidade);
+  if (produto->nome[0] == '*') {
+    return;
+  }
+  printf(">> %s\n", produto->nome);
+  printf("QUANTIDADE: %.2d\n", produto->quantidade);
+  printf("CODIGO: %.4d\n", produto->codigo);
 }
 
 void listarTodosProdutos(Produto *produto) {
+  int count = 1;
+
   for (int i = 0; (lerProdutoDoArquivo(produto, i)) != 0; i++) {
+    if (produto->nome[0] == '*') {
+      continue;
+    }
+
+    printf("\n");
+    printf("====================================\n");
+    printf("                 %.4d               \n", count);
+    printf("====================================\n");
     imprimirProduto(produto);
+
+    count++;
   }
 }
 
 void listarProdutosIndisponiveis(Produto *produto) {
+  int count = 0;
   for (int i = 0; (lerProdutoDoArquivo(produto, i)) != 0; i++) {
     if (produto->quantidade == 0) {
+      printf("\n");
+      printf("====================================\n");
+      printf("                 %.4d               \n", i + 1);
+      printf("====================================\n");
       imprimirProduto(produto);
+
+      count++;
     }
+  }
+
+  if (count == 0) {
+    printf("\n>> Nenhum produto indisponível para exibir.\n\n");
   }
 }
 
@@ -562,66 +590,47 @@ void alterarProduto(char *nome, Produto *produto) {
   alterarProdutoNoArquivo(produto, i);
 }
 
+void excluirProduto(char *nome, Produto *produto) {
+  int id = pesquisarProdutoPorNome(nome, produto);
+
+  if (id == -1) {
+    printf(">> \"%s\" não está cadastrado no sistema.\n\n", nome);
+    return;
+  }
+
+  lerProdutoDoArquivo(produto, id);
+  copiarStrings("********************", produto->nome);
+  produto->quantidade = -1;
+  produto->codigo = -1;
+  alterarProdutoNoArquivo(produto, id);
+
+  printf(">> \"%s\" removido do cadastro de produtos.\n\n", nome);
+}
+
+void incluirProduto(Produto *produto) {
+  printf("\n");
+  printf("====================================\n");
+  printf("             NOVO PRODUTO           \n");
+  printf("====================================\n");
+
+  printf("\n> Digite os dados do produto:\n");
+  printf("> NOME: ");
+  gets(produto->nome);
+  printf("> CODIGO: ");
+  scanf("%d", &produto->codigo);
+  printf("> QUANTIDADE: ");
+  scanf("%d", &produto->quantidade);
+
+  salvarProdutoNoFinalDoArquivo(produto);
+  printf("\n>> \"%s\" cadastrado com sucesso!\n\n", produto->nome);
+}
+
 int main() {
   char res = '0';
   Produto produto;
-  alterarProduto("Macarrão", &produto);
-  // alterarQuantidade("Outro Produto", 3, &produto);
-  // Produto produto = {1, "Macarrão", 2};
-  // salvarProdutoNoFinalDoArquivo(&produto);
-  // copiarStrings("Amaciante", produto.nome);
-  // produto.codigo++;
-  // produto.quantidade = 2;
-  // salvarProdutoNoFinalDoArquivo(&produto);
-  //
-  // copiarStrings("Macarrão", produto.nome);
-  // produto.codigo++;
-  // produto.quantidade = 10;
-  // salvarProdutoNoFinalDoArquivo(&produto);
-  //
-  // copiarStrings("Outro Produto", produto.nome);
-  // produto.codigo++;
-  // produto.quantidade = 0;
-  // salvarProdutoNoFinalDoArquivo(&produto);
-  //
-  // printf("================================================================\n");
   // listarProdutosIndisponiveis(&produto);
-  // printf("================================================================\n");
-  // alterarQuantidade("Outro Produto", 3, &produto);
-  // listarProdutosIndisponiveis(&produto);
-  // printf("Quantidade alterada.\n");
-  // printf("================================================================\n");
-
-  // Produto produto = {10, "Outro Produto", 0};
-  // salvarProdutoNoFinalDoArquivo(&produto);
-
-  // pesquisarProdutoPorNome("Macarrão", &produto);
-  // imprimirProduto(&produto);
-
-  // Produto produto = {10, "Outro Produto", 0};
-  // salvarProdutoNoArquivo(&produto);
-  // lerProdutoDoArquivo(&produto);
-  // imprimirProduto(&produto);
-
-  // copiarStrings("Amaciante", produto.nome);
-  // produto.codigo++;
-  // produto.quantidade = 2;
-  // salvarProdutoNoFinalDoArquivo(&produto);
-  //
-  // copiarStrings("Macarrão", produto.nome);
-  // produto.codigo++;
-  // produto.quantidade = 10;
-  // salvarProdutoNoFinalDoArquivo(&produto);
-  //
-  // copiarStrings("Outro Produto", produto.nome);
-  // produto.codigo++;
-  // produto.quantidade = 0;
-  // salvarProdutoNoFinalDoArquivo(&produto);
-  //
-  listarTodosProdutos(&produto);
-
-  // lerProdutoDoArquivo(&produto);
-  // imprimirProduto(&produto);
+  // incluirProduto(&produto);
+  // listarTodosProdutos(&produto);
 
   // while (res == '0') {
   //

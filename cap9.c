@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#define ex6
+#define ex2
 
 void limpaBuffer() {
   while (getchar() != '\n')
@@ -94,6 +94,16 @@ void imprime_total_final(float *total) {
   }
 }
 
+void entradaDeDados(char *operador, float *n) {
+  scanf("%c", operador);
+  limpaBuffer();
+
+  if (*operador != '=') {
+    scanf("%f", n);
+    limpaBuffer();
+  }
+}
+
 int main() {
   float total = 0, n;
   char operador = '\0';
@@ -110,13 +120,7 @@ int main() {
   limpaBuffer();
 
   while (operador != '=') {
-    scanf("%c", &operador);
-    limpaBuffer();
-
-    if (operador != '=') {
-      scanf("%f", &n);
-      limpaBuffer();
-    }
+    entradaDeDados(&operador, &n);
 
     switch (operador) {
     case '+':

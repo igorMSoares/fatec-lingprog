@@ -835,7 +835,7 @@ void exibir(Cliente *cliente) {
   printf("CELULAR: %s\n", cliente->celular);
 }
 
-int pesquisarPorNome(char *nome, Cliente *cliente) {
+int pesquisarPorNomeNoArquivo(char *nome, Cliente *cliente) {
   int numeroDeBytesLidos = -1;
   FILE *f = fopen("clientes.txt", "r");
 
@@ -863,7 +863,7 @@ void pesquisar(Cliente *cliente) {
   printf("> Digite o nome do cliente para pesquisar: ");
   gets(nome);
 
-  int id = pesquisarPorNome(nome, cliente);
+  int id = pesquisarPorNomeNoArquivo(nome, cliente);
 
   if (id == -1) {
     printf("\n>> \"%s\" não está cadastrado no sistema.\n", nome);
@@ -911,7 +911,7 @@ void alterar(Cliente *cliente) {
   printf("> Digite o nome do cliente a ser alterado: ");
   gets(nome);
 
-  int i = pesquisarPorNome(nome, cliente);
+  int i = pesquisarPorNomeNoArquivo(nome, cliente);
 
   if (i == -1) {
     printf("\n>> \"%s\" não está cadastrado no sistema.\n", nome);
@@ -935,7 +935,7 @@ void excluir(Cliente *cliente) {
   printf("> Digite o nome do cliente a ser excluido: ");
   gets(nome);
 
-  int id = pesquisarPorNome(nome, cliente);
+  int id = pesquisarPorNomeNoArquivo(nome, cliente);
 
   if (id == -1) {
     printf("\n>> \"%s\" não está cadastrado no sistema.\n", nome);
@@ -950,7 +950,7 @@ void excluir(Cliente *cliente) {
   printf("\n>> \"%s\" removido do cadastro de clientes.\n", nome);
 }
 
-void incluir(Cliente *cliente) {
+void entradaDeDados(Cliente *cliente) {
   char res = '1';
 
   while (res != '0') {
@@ -1004,7 +1004,7 @@ int main() {
 
     switch (res) {
     case '1':
-      incluir(&cliente);
+      entradaDeDados(&cliente);
       break;
     case '2':
       listarTodos(&cliente);
